@@ -38,7 +38,7 @@ png("./plot4.png",width = 480, height = 480, units = "px")
 # theme_bw( base_size = 10)+
 # scale_x_continuous(breaks=seq(1999, 2008, 3))
 pic<-ggplot(NEI_coal_agg, aes(factor(year), x)) + geom_bar(stat="identity") +
-    xlab("year") + ylab("Total Emissions Baltimore [tons]") 
+    xlab("year") + ylab("Total Emissions USA Coal Sources [tons]") 
 print(pic)
 dev.off()
 

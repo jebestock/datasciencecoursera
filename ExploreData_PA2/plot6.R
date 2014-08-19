@@ -45,18 +45,10 @@ NEI_veh_bl <-  NEI_veh[NEI_veh$fips=="24510"|NEI_veh$fips=="06037", ]
 #
 NEI_veh_bl_agg <- aggregate(NEI_veh_bl$Emissions,list(year=NEI_veh_bl$year,location=NEI_veh_bl$fips),sum) 
 #
-#
-# compute also total sum of emissions in each of the 2 cities for relative change
-# comparision later in the plotting
-#
-NEI_veh_bl_tot_agg <- aggregate(NEI_veh_bl$Emissions,list(location=NEI_veh_bl$fips),sum)
-#
 # make location a factor variable and change level name for more descriptive plotting afterwards
 #
 NEI_veh_bl_agg$location <- factor(NEI_veh_bl_agg$location)
 levels(NEI_veh_bl_agg$location) <- c("LA","BA")
-NEI_veh_bl_mean_agg$location <- factor(NEI_veh_bl_mean_agg$location)
-levels(NEI_veh_bl_mean_agg$location) <- c("LA","BA")
 #
 # compute for each year the relative difference 100*emis((year,city)-total(city))/total(city)
 #
