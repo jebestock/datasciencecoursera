@@ -21,6 +21,6 @@ SumEmissionsVersusYearBaltimore <- tapply(NEI_baltimore$Emissions,NEI_baltimore$
 #
 png("./plot2.png",width = 480, height = 480, units = "px")
 Year <- c(1999,2002,2005,2008)
-plot(Year,SumEmissionsVersusYearBaltimore,col="red",xaxp  = c(1999, 2008, 3),main="Total PM2.5 Emission",xlab="Year",ylab="Sum Emissions [tons]")
+plot(Year,SumEmissionsVersusYearBaltimore,col="red",xaxp  = c(1999, 2008, 3),main="Total PM2.5 Emission Baltimore",xlab="Year",ylab="Sum Emissions [tons]")
 dev.off()
 
