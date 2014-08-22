@@ -20,6 +20,6 @@ SumEmissionsVersusYear <- tapply(NEI$Emissions,NEI$year,sum)
 #
 png("./plot1.png",width = 480, height = 480, units = "px")
 Year <- c(1999,2002,2005,2008)
-plot(Year,SumEmissionsVersusYear,col="red",axes=T,main="Total PM2.5 Emission",xlab="Year",ylab="Sum Emissions [tons]")
+plot(Year,SumEmissionsVersusYear,col="red",axes=T,xaxp  = c(1999, 2008, 3),main="Total PM2.5 Emission",xlab="Year",ylab="Sum Emissions [tons]")
 dev.off()
 
