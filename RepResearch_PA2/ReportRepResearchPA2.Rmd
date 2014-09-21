@@ -1,0 +1,163 @@
+---
+title: The Impact of Storm Events on Public Health and Damage -- An Analysis of US
+  Storm Data
+output:
+  html_document:
+    keep_md: yes
+  pdf_document: default
+---
+Author: Jens Berkmann
+<!-- setwd("C:/Users/jb/datasciencecoursera/RepResearch_PA2") -->
+
+
+
+## Synopsis
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+In this report  the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database is explored and we found that tornados have the most harmful consequences to population health while flood and draught 
+ have the greatest economic consequences. 
+ In fact, for the whole time period of the database more than 5000 people died in the US as a results of a tornado and more than 80000 people were injured. Moreover, a total amount worth of roughly 100 Billion USD each of property and crop damage were caused by flood and draught, respectively.
+
+
+## Data Processing
+Let us start by setting global options and loading the required R packages followed by dataset download.
+
+```{r}
+#Global settings
+library(knitr)
+library(downloader) 
+library(plyr)
+library(stringr)
+library(ggplot2)
+library(gridExtra)
+knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+# Environment for data analysis
+sessionInfo()
+```
+
+
+```{r}
+URL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+filename <- "tmp.csv.bz2"
+download(URL, filename, mode="wb") 
+data <- read.csv("tmp.csv.bz2")
+names(data)
+```
+
+From the descriptive information on the dataset available at  
+https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf 
+we extract the relevant columns from the dataset that are required to answer the questions stated.
+
+```{r}
+data <- data[,c("EVTYPE",   "FATALITIES", "INJURIES", 
+                            "PROPDMG", "PROPDMGEXP",
+                            "CROPDMG", "CROPDMGEXP")]
+```
+
+According to the documentation the data in the columns *PROPDMGEXP* and *CROPDMGEXP* are supposed to contain the "exponents" K (Kilo), M (Million), and B (Billion) only to magnify the numbers in the columns
+*PROPDMG* and *CROPDMG*, respectively. 
+However when inspecting the columns we find that other "exponential" values exist, however their frequency is not much relevant. 
+ 
+
+```{r}
+count(data$PROPDMGEXP)
+count(data$CROPDMGEXP)
+```
+
+We decide to:
+
+* convert k,m,b to capital letters and interpret them as K,M,B, i.e. treat them as exponents (exp) $10^{exp}$ with $exp=3,6,9$
+
+* treat numbers 0-9 as exponents $10^{exp}$
+
+* ignore the empty string "", as well as -", "+", "?", i.e. treat them as an exponent $exp=0$
+
+* treat "h" and "H" as an exponent $exp=0$ even though it could mean "hundreds" (but we do not know).
+
+```{r}
+data$PROPDMGEXP <- toupper(data$PROPDMGEXP)
+data$CROPDMGEXP <- toupper(data$CROPDMGEXP)
+data$PROPDMGEXP <- str_trim(data$PROPDMGEXP)
+data$CROPDMGEXP <- str_trim(data$CROPDMGEXP)
+data$PROPDMGEXP <- gsub("[-+?hH]","0",data$PROPDMGEXP)
+data$CROPDMGEXP <- gsub("[-+?hH]","0",data$CROPDMGEXP)
+data[data$PROPDMGEXP=="",]$PROPDMGEXP <- "0"
+data[data$CROPDMGEXP=="",]$CROPDMGEXP <- "0"
+data$PROPDMGEXP <- gsub("K","3",data$PROPDMGEXP)
+data$PROPDMGEXP <- gsub("M","6",data$PROPDMGEXP)
+data$PROPDMGEXP <- gsub("B","9",data$PROPDMGEXP)
+data$CROPDMGEXP <- gsub("K","3",data$CROPDMGEXP)
+data$CROPDMGEXP <- gsub("M","6",data$CROPDMGEXP)
+data$CROPDMGEXP <- gsub("B","9",data$CROPDMGEXP)
+
+```
+
+We then create 3 new columns which contain the costs in US$ for property damage and crop damage as well as the sum of those 2 values.
+
+```{r}
+data$PROP<- data$PROPDMG  * 10^(as.numeric(data$PROPDMGEXP))
+data$CROP<- data$CROPDMG  * 10^(as.numeric(data$CROPDMGEXP))
+data$DMG <- data$PROP + data$CROP
+```
+
+The final pre-processed data can be summarized as follows:
+
+```{r}
+data <- data[,c("EVTYPE",  "FATALITIES", "INJURIES", 
+                           "PROP", "CROP", "DMG")]
+str(data)
+summary(data)
+```
+
+
+## Processing of Data
+
+Let us now look at the sum of the individual variables 
+"FATALITIES", "INJURIES", "PROP", "CROP" depending on the type of event. We then rearrange the data in decreasing order from which we finally extract the top 10 rows for final plotting.
+ 
+```{r}
+inju <- aggregate(data$INJURIES,   list(Event=data$EVTYPE), sum)
+fata <- aggregate(data$FATALITIES, list(Event=data$EVTYPE), sum)
+prop <- aggregate(data$PROP,       list(Event=data$EVTYPE), sum)
+crop <- aggregate(data$CROP,       list(Event=data$EVTYPE), sum)
+inju <- arrange(inju,desc(x))[1:10,]
+fata <- arrange(fata,desc(x))[1:10,]
+prop <- arrange(prop,desc(x))[1:10,]
+crop <- arrange(crop,desc(x))[1:10,]
+```
+
+## Results
+
+In the following figure the top 10 events are shown causing the highest total number of fatalities and injuries, respectively.
+
+```{r fig.width=10}
+pic1 <- ggplot(inju, aes(x=Event, y=x, fill=Event)) +
+     geom_bar(stat="identity") +
+     scale_x_discrete(breaks=NULL) +
+     labs(y="Total number of Injuries") +
+     ggtitle("Top 10 injury causing events")
+pic2 <- ggplot(fata, aes(x=Event, y=x, fill=Event)) +
+     geom_bar(stat="identity") +
+     scale_x_discrete(breaks=NULL) +
+     labs(y="Total number of Fatalities") +
+     ggtitle("Top 10 fatality causing events")
+p<-grid.arrange(pic1, pic2, ncol=2)
+```
+
+In the final figure the top 10 events are shown causing the highest total number of damage of property or crop, respectively.
+
+```{r fig.width=10}
+pic1 <- ggplot(prop, aes(x=Event, y=x, fill=Event)) +
+     geom_bar(stat="identity") +
+     scale_x_discrete(breaks=NULL) +
+     labs(y="Property damage [USD]") +
+     ggtitle("Top 10 property damage events")
+pic2 <- ggplot(crop, aes(x=Event, y=x, fill=Event)) +
+     geom_bar(stat="identity") +
+     scale_x_discrete(breaks=NULL) +
+     labs(y="Crop damage [USD]") +
+     ggtitle("Top 10 crop damage events")
+p<-grid.arrange(pic1, pic2, ncol=2)
+```
+
+It is observed that tornados are most harmful for population health. Flood causes greatest economical consequences for property damage in the US while the highest costs for crop damage are caused by draught.
